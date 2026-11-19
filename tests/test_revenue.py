@@ -52,3 +52,15 @@ def test_replayed_events_do_not_inflate_daily_totals():
     ])
     report = daily_revenue(events)
     assert report["revenue_cents"].tolist() == [6500]
+
+
+def test_replay_preserves_identically_priced_payment_on_same_order():
+    # Two real payments share an order, timestamp and amount but have
+    # different event IDs; replaying one must leave the day at 4000 cents.
+    events = frame([
+        ("evt_a1", "ord_11", "2026-10-30T12:00:00Z", "2026-10-30T12:00:01Z", 2000),
+        ("evt_b1", "ord_11", "2026-10-30T12:00:00Z", "2026-10-30T12:00:02Z", 2000),
+        ("evt_a1", "ord_11", "2026-10-30T12:00:00Z", "2026-10-30T12:12:00Z", 2000),
+    ])
+    report = daily_revenue(events)
+    assert report["revenue_cents"].tolist() == [4000]
